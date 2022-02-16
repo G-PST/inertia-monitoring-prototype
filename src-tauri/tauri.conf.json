@@ -1,13 +1,13 @@
 {
   "package": {
     "productName": "inertia-monitoring-dashboard",
-    "version": "0.1.0"
+    "version": "0.0.5"
   },
   "build": {
     "distDir": "../build",
     "devPath": "http://localhost:3000",
-    "beforeDevCommand": "",
-    "beforeBuildCommand": ""
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
   },
   "tauri": {
     "bundle": {
