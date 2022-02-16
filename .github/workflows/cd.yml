@@ -3,14 +3,16 @@ on:
   push:
     tags:
       - v*
+    branches-ignore:
+      - '**'
 
 jobs:
-  publish-tauri:
+  release:
+    name: Tauri (${{ matrix.platform }})
     strategy:
       fail-fast: false
       matrix:
         platform: [macos-latest, ubuntu-latest, windows-latest]
-
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v2
@@ -22,6 +24,16 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - name: cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.platform }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: install webkit2gtk (ubuntu only)
         if: matrix.platform == 'ubuntu-latest'
         run: |
