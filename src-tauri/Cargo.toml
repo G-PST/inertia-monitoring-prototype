@@ -1,11 +1,11 @@
 [package]
-name = "app"
+name = "inertia-monitoring-dashboard"
 version = "0.0.6"
-description = "A Tauri App"
+description = "Inertia Monitoring Dashboard"
 authors = ["you"]
 license = ""
 repository = ""
-default-run = "app"
+default-run = "inertia-monitoring-dashboard"
 edition = "2021"
 rust-version = "1.57"
 
