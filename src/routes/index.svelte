@@ -46,16 +46,13 @@
   }
 
   async function _watch(filepath) {
-    if (stopWatching) {
-      await stopWatching()
-      stopWatching = null
-    }
+    await _unwatch()
     stopWatching = await watch(filepath, { recursive: true }, _watchCallback).catch(_watchCallback)
   }
 
   async function _unwatch() {
     if (stopWatching) {
-      await stopWatching()
+      await stopWatching().catch((error) => console.error(error))
       stopWatching = null
     }
   }
@@ -67,7 +64,7 @@
         console.log({ m })
         data = m
         if (stopWatching === null) {
-          _watch(filepath)
+          await _watch(filepath).catch((error) => console.error(error))
         }
       })
       .catch((error) => console.error(error))
@@ -77,9 +74,12 @@
 <div class="flex mx-20 mt-6 space-x-2 justify-between content-center items-center">
   <h1 class="text-2xl px-6 py-2.5 font-medium leading-tight">Dashboard</h1>
   <div class="flex items-center space-x-6">
-    {#if stopWatching !== null}
-      <Fa icon={faSync} spin on:click={_unwatch} />
-    {/if}
+    <button
+      on:click={async () => await _unwatch().catch((error) => console.error(error))}
+      disabled={stopWatching === null}
+    >
+      <Fa icon={faSync} spin={stopWatching !== null} />
+    </button>
     <button
       on:click={handleClick}
       type="button"
