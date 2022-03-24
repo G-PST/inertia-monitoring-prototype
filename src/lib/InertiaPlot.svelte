@@ -2,36 +2,26 @@
   @component
   Generates an SVG area shape using the `area` function from [d3-shape](https://github.com/d3/d3-shape).
  -->
-<script>
+<script lang="ts">
   import { Svg } from 'layercake'
   import { getContext } from 'svelte'
-  const { data, xGet, yGet, xScale, yScale, extents } = getContext('LayerCake')
-  /**  @type {String} [fill='#ab00d610'] The shape's fill color. This is technically optional because it comes with a default value but you'll likely want to replace it with your own color. */
-  export let fill = '#ab00d610'
-  $: path =
-    'M' +
-    $data
-      .map((d) => {
-        return $xGet(d) + ',' + $yGet(d)
-      })
-      .join('L')
-  let area
-  $: {
-    const yRange = $yScale.range()
-    area =
-      path +
-      ('L' +
-        $xScale($extents.x ? $extents.x[1] : 0) +
-        ',' +
-        yRange[0] +
-        'L' +
-        $xScale($extents.x ? $extents.x[0] : 0) +
-        ',' +
-        yRange[0] +
-        'Z')
+  const { data, width, height } = getContext('LayerCake')
+  export let stroke = '#ab00d6'
+
+  function linePlot(generator) {
+    return (
+      'M' +
+      [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+        .map((d) => $width * d + ',' + $height * d)
+        .join('L')
+    )
   }
+  console.log($data)
 </script>
 
 <Svg>
-  <path class="path-area" d={area} {fill} />
+  <text>hello</text>
+  {#each $data as line}
+    <path class="path-line" d={linePlot(line)} {stroke} />
+  {/each}
 </Svg>

@@ -3,6 +3,7 @@
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
+use tauri_plugin_fs_watch::Watcher;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Generator {
@@ -36,6 +37,8 @@ fn get_system_data(data: String) -> Result<Vec<Generator>, String> {
 
 fn main() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_window_state::WindowState::default())
+    .plugin(Watcher::default())
     .invoke_handler(tauri::generate_handler![get_system_data])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
