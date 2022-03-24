@@ -7,7 +7,8 @@
     "distDir": "../build",
     "devPath": "http://localhost:3000",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build",
+    "withGlobalTauri": true
   },
   "tauri": {
     "bundle": {
@@ -62,7 +63,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src blob: data: filesystem: ws: http: https: 'unsafe-eval' 'unsafe-inline'"
     }
   }
 }

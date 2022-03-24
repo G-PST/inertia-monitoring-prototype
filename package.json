@@ -41,6 +41,7 @@
   },
   "type": "module",
   "dependencies": {
-    "tw-elements": "^1.0.0-alpha11"
+    "tw-elements": "^1.0.0-alpha11",
+    "svelte-file-dropzone": "^1.0.0-dev.1"
   }
 }
