@@ -1,40 +1,28 @@
-# create-svelte
+# Inertia Monitoring Dashboard
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+Install `rust`, `node` and `tauri`
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
+### Develop
 
 ```bash
-# create a new project in the current directory
-npm init svelte@next
-
-# create a new project in my-app
-npm init svelte@next my-app
+npm install
+npm run tauri dev
 ```
 
-> Note: the `@next` is temporary
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### Build
 
 ```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
+npm install
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+### Release
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+Change version number in all these files:
+
+```bash
+package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json
+```
+
+Commit and push to GitHub.
+Then make new release on GitHub.
