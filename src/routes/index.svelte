@@ -37,35 +37,28 @@
   ]
 
   let commitment_data: [] = []
-  $: commitment_columns = generator_data
-    .map((d) => d.name)
-    .map((n) => {
-      return {
-        title: n,
-        field: n.toLowerCase(),
-      }
-    })
-  let stopWatching = null
-
-  function _watchCallback(event) {
-    const { type, payload } = event
-    invoke('get_system_data', { data: payload })
-      .then(async (m: Generator[]) => {
-        console.log({ m })
-        generator_data = m
+  function getCommitmentColumns(data: Generator[]) {
+    let d = data
+      .map((d) => d.name)
+      .map((n) => {
+        return {
+          title: n,
+          field: n,
+        }
       })
-      .catch((error) => console.error(error))
+    d.unshift({ title: 'Timestamp', field: 'timestamp' })
+    return d
   }
-
-  async function _watch(filepath) {
-    await _unwatch()
-    stopWatching = await watch(filepath, { recursive: true }, _watchCallback).catch(_watchCallback)
-  }
+  $: commitment_columns = getCommitmentColumns(generator_data)
+  let stopWatchingSystemData = null
+  let stopWatchingCommitmentData = null
 
   async function _unwatch() {
-    if (stopWatching) {
-      await stopWatching().catch((error) => console.error(error))
-      stopWatching = null
+    if (stopWatchingSystemData) {
+      await stopWatchingSystemData().catch((error) => console.error(error))
+    }
+    if (stopWatchingCommitmentData) {
+      await stopWatchingCommitmentData().catch((error) => console.error(error))
     }
   }
 
@@ -75,26 +68,31 @@
       multiple: false,
       title: 'Folder with system and commitment data',
     })
-    const systemfilepath = join(folder[0], 'system-data.csv')
-    invoke('get_system_data', { data: systemfilepath })
-      .then(async (m: Generator[]) => {
-        console.log({ m })
-        generator_data = m
-        if (stopWatching === null) {
-          await _watch(systemfilepath).catch((error) => console.error(error))
-        }
+    const systemfilepath = await join(<string>folder, 'system-data.csv')
+    generator_data = await invoke('get_system_data', { data: systemfilepath })
+    if (stopWatchingSystemData === null) {
+      stopWatchingSystemData = await watch(systemfilepath, { recursive: true }, (e) => {
+        invoke('get_system_data', { data: e.payload })
+          .then(async (m: Generator[]) => {
+            generator_data = m
+          })
+          .catch((error) => console.error(error))
       })
-      .catch((error) => console.error(error))
+    }
 
-    const commitmentfilepath = join(folder[0], 'commitment-data.csv')
-    invoke('get_commitment_data', { data: systemfilepath })
-      .then(async (m: Generator[]) => {
-        commitment_data = m
-        if (stopWatching === null) {
-          await _watch(systemfilepath).catch((error) => console.error(error))
-        }
+    const commitmentfilepath = await join(<string>folder, 'commitment-data.csv')
+    commitment_data = await invoke('get_commitment_data', {
+      data: commitmentfilepath,
+    })
+    if (stopWatchingCommitmentData === null) {
+      stopWatchingCommitmentData = await watch(commitmentfilepath, { recursive: true }, (e) => {
+        invoke('get_commitment_data', { data: e.payload })
+          .then(async (m: []) => {
+            commitment_data = m
+          })
+          .catch((error) => console.error(error))
       })
-      .catch((error) => console.error(error))
+    }
   }
 </script>
 
@@ -102,10 +100,10 @@
   <h1 class="text-2xl py-2.5 font-medium leading-tight">Dashboard</h1>
   <div class="flex items-center space-x-6">
     <button
-      on:click={async () => await _unwatch().catch((error) => console.error(error))}
-      disabled={stopWatching === null}
+      on:click={async () => _unwatch()}
+      disabled={stopWatchingSystemData === null && stopWatchingCommitmentData === null}
     >
-      <Fa icon={faSync} spin={stopWatching !== null} />
+      <Fa icon={faSync} spin={stopWatchingSystemData !== null} />
     </button>
     <button
       on:click={handleClick}
@@ -129,6 +127,6 @@
     </div>
   {:else}
     <Table data={generator_data} columns={generator_columns} />
-    <Table data={commitment_data} columns={commitment_columns} />
+    <Table data={commitment_data} columns={commitment_columns} id={false} />
   {/if}
 </div>

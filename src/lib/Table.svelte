@@ -24,6 +24,7 @@
   export let showAll = false
   export let N = 10
   export let loading = false
+  export let id = true
 
   function getPages(showAll: boolean) {
     const n = showAll ? data.length + 1 : N
@@ -136,9 +137,11 @@
         <table class="table-auto w-full">
           <thead class="border-b bg-gray-800">
             <tr>
-              <th scope="col" class="text-sm font-medium text-white px-6 py-4 text-left">
-                <span>ID</span>
-              </th>
+              {#if id}
+                <th scope="col" class="text-sm font-medium text-white px-6 py-4 text-left">
+                  <span>ID</span>
+                </th>
+              {/if}
               {#each columns as column}
                 <th scope="col" class="text-sm font-medium text-white px-6 py-4 text-left">
                   <div class="flex">
@@ -168,9 +171,11 @@
             {#each data as row, index (row)}
               {#if index >= activePage * numberElementsPerPage && index < (activePage + 1) * numberElementsPerPage}
                 <tr class="border-b hover:bg-gray-100">
-                  <td class="px-6 py-4 whitespace text-sm font-medium text-gray-900">
-                    {row.id || index + 1}
-                  </td>
+                  {#if id}
+                    <td class="px-6 py-4 whitespace text-sm font-medium text-gray-900">
+                      {row.id || index + 1}
+                    </td>
+                  {/if}
                   {#each columns as column}
                     <td class="px-6 py-4 whitespace text-sm font-medium text-gray-900"
                       >{row[column.field]}</td

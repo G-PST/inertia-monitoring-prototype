@@ -16,7 +16,7 @@ def main():
     ngen = args.generators
     timesteps = args.timesteps
     delay = args.delay
-    with open("examples/commitment-status.csv", "a") as f:
+    with open("examples/commitment-data.csv", "a") as f:
         for _ in range(0, timesteps):
             date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")
             generators = ",".join([str(random.randint(0, 1)) for _ in range(0, ngen)])
