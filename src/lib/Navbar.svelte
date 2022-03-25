@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Icon from 'svelte-awesome'
+  import Fa from 'svelte-fa'
   import { faGithub } from '@fortawesome/free-brands-svg-icons'
 </script>
 
@@ -23,7 +23,7 @@
         class="text-white opacity-60 hover:opacity-80 focus:opacity-80 mr-4"
         href="https://github.com/G-PST/inertia-monitoring-prototype"
       >
-        <Icon data={faGithub} />
+        <Fa icon={faGithub} />
       </a>
     </div>
     <!-- Right elements -->
