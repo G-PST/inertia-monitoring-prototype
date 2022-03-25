@@ -1,23 +1,29 @@
 <script context="module" lang="ts">
   import Fa from 'svelte-fa/src/fa.svelte'
-  import { faCaretDown, faCaretUp } from '@fortawesome/free-solid-svg-icons'
+  import {
+    faCaretDown,
+    faCaretUp,
+    faExclamationTriangle,
+    faSpinner,
+  } from '@fortawesome/free-solid-svg-icons'
 </script>
 
 <script lang="ts">
   interface Column {
     field: string
-    sortName: string
+    sortName?: string
     title: string
-    show: boolean
-    sort: string
-    sortColor: string
-    sortActive: boolean
+    show?: boolean
+    sort?: string
+    sortColor?: string
+    sortActive?: boolean
   }
 
   export let data = []
   export let columns: Column[] = []
   export let showAll = false
   export let N = 10
+  export let loading = false
 
   function getPages(showAll: boolean) {
     const n = showAll ? data.length + 1 : N
@@ -98,80 +104,96 @@
   $: sortData(data)
 </script>
 
-<div class="flex w-full flex-col mt-6">
-  <div class="flex w-full justify-between">
-    <button
-      on:click={(_) => (showAll = !showAll)}
-      type="button"
-      class="inline-block px-6 py-1.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg"
+{#if loading}
+  <div class="grid-flow-row w-full items-stretch">
+    <div
+      class="bg-yellow-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full"
+      role="alert"
     >
-      {#if showAll}
-        <Fa icon={faCaretUp} />
-      {:else}
-        <Fa icon={faCaretDown} />
-      {/if}
-    </button>
+      <Fa class="w-4 h-4 mr-2 fill-current" icon={faSpinner} spin />
+      Loading...
+    </div>
   </div>
-</div>
-
-<table class="table-auto w-full">
-  <thead class="border-b bg-gray-800">
-    <tr>
-      <th scope="col" class="text-sm font-medium text-white px-6 py-4 text-left">
-        <span>ID</span>
-      </th>
-      {#each columns as column}
-        <th scope="col" class="text-sm font-medium text-white px-6 py-4 text-left">
-          <div class="flex">
-            <span>{column.title}</span> &nbsp;
-            {#if column.sort == 'ascending'}
-              <button on:click={() => handleSort(column)}
-                ><Fa
-                  style="color: {column.sortActive ? column.sortColor : '#aaa'}"
-                  icon={faCaretDown}
-                /></button
-              >
-            {/if}
-            {#if column.sort == 'descending'}
-              <button on:click={() => handleSort(column)}
-                ><Fa
-                  style="color: {column.sortActive ? column.sortColor : '#aaa'}"
-                  icon={faCaretUp}
-                /></button
-              >
-            {/if}
-          </div>
-        </th>
-      {/each}
-    </tr>
-  </thead>
-  <tbody>
-    {#each data as row, index (row)}
-      {#if index >= activePage * numberElementsPerPage && index < (activePage + 1) * numberElementsPerPage}
-        <tr class="border-b hover:bg-gray-100">
-          <td class="px-6 py-4 whitespace text-sm font-medium text-gray-900">
-            {row.id}
-          </td>
-          {#each columns as column}
-            <td class="px-6 py-4 whitespace text-sm font-medium text-gray-900"
-              >{row[column.field]}</td
-            >
-          {/each}
-        </tr>
-      {/if}
-    {/each}
-  </tbody>
-</table>
-<div class="flex w-full justify-between mb-12">
-  <div class="flex justify-center">
-    {#if !showAll}
-      <span class="px-2 py-3"
-        >Showing {N * activePage + 1} to {Math.min(N * (activePage + 1), data.length)} of
-        {data.length} rows with
-      </span>
-      <div class="dropdown relative">
-        <button
-          class="
+{:else}
+  <div class="flex w-full flex-col mt-6">
+    <div class="flex w-full justify-between">
+      <button
+        on:click={(_) => (showAll = !showAll)}
+        type="button"
+        class="inline-block px-6 py-1.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg"
+      >
+        {#if showAll}
+          <Fa icon={faCaretUp} />
+        {:else}
+          <Fa icon={faCaretDown} />
+        {/if}
+      </button>
+    </div>
+  </div>
+  <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
+    <div class="py-2 inline-block w-full sm:px-6 lg:px-8">
+      <div class="overflow-x-auto">
+        <table class="table-auto w-full">
+          <thead class="border-b bg-gray-800">
+            <tr>
+              <th scope="col" class="text-sm font-medium text-white px-6 py-4 text-left">
+                <span>ID</span>
+              </th>
+              {#each columns as column}
+                <th scope="col" class="text-sm font-medium text-white px-6 py-4 text-left">
+                  <div class="flex">
+                    <span>{column.title}</span> &nbsp;
+                    {#if column.sort == 'ascending'}
+                      <button on:click={() => handleSort(column)}
+                        ><Fa
+                          style="color: {column.sortActive ? column.sortColor : '#aaa'}"
+                          icon={faCaretDown}
+                        /></button
+                      >
+                    {/if}
+                    {#if column.sort == 'descending'}
+                      <button on:click={() => handleSort(column)}
+                        ><Fa
+                          style="color: {column.sortActive ? column.sortColor : '#aaa'}"
+                          icon={faCaretUp}
+                        /></button
+                      >
+                    {/if}
+                  </div>
+                </th>
+              {/each}
+            </tr>
+          </thead>
+          <tbody>
+            {#each data as row, index (row)}
+              {#if index >= activePage * numberElementsPerPage && index < (activePage + 1) * numberElementsPerPage}
+                <tr class="border-b hover:bg-gray-100">
+                  <td class="px-6 py-4 whitespace text-sm font-medium text-gray-900">
+                    {row.id || index + 1}
+                  </td>
+                  {#each columns as column}
+                    <td class="px-6 py-4 whitespace text-sm font-medium text-gray-900"
+                      >{row[column.field]}</td
+                    >
+                  {/each}
+                </tr>
+              {/if}
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="flex w-full justify-between mb-12">
+    <div class="flex justify-center">
+      {#if !showAll}
+        <span class="px-2 py-3"
+          >Showing {N * activePage + 1} to {Math.min(N * (activePage + 1), data.length)} of
+          {data.length} rows with
+        </span>
+        <div class="dropdown relative">
+          <button
+            class="
           dropdown-toggle
           px-2
           py-3
@@ -193,16 +215,16 @@
           items-center
           whitespace-nowrap
         "
-          type="button"
-          id="dropdownMenuButton1"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-        >
-          {N} <span class="px-1" />
-          <Fa icon={faCaretDown} />
-        </button>
-        <ul
-          class="
+            type="button"
+            id="dropdownMenuButton1"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            {N} <span class="px-1" />
+            <Fa icon={faCaretDown} />
+          </button>
+          <ul
+            class="
           dropdown-menu
           min-w-max
           absolute
@@ -221,11 +243,11 @@
           bg-clip-padding
           border-none
         "
-        >
-          <li>
-            <button
-              on:click={() => (N = 10)}
-              class="
+          >
+            <li>
+              <button
+                on:click={() => (N = 10)}
+                class="
               dropdown-item
               text-sm
               py-2.5
@@ -238,12 +260,12 @@
               text-gray-700
               hover:bg-gray-100
             ">10</button
-            >
-          </li>
-          <li>
-            <button
-              on:click={() => (N = 25)}
-              class="
+              >
+            </li>
+            <li>
+              <button
+                on:click={() => (N = 25)}
+                class="
               dropdown-item
               text-sm
               py-2.5
@@ -256,51 +278,52 @@
               text-gray-700
               hover:bg-gray-100
             ">25</button
-            >
-          </li>
-        </ul>
-      </div>
-      <span class="px-2 py-3">rows per page.</span>
-    {/if}
-  </div>
-  <nav aria-label="Page navigation example">
-    {#if !showAll}
-      <ul class="flex  list-style-none">
-        <li class="page-item {isFirstPageActive ? 'disabled' : ''}">
-          <button
-            on:click={(_) => selectPage(1)}
-            class="page-link relative block py-1.5 px-3 rounded border-0 bg-transparent outline-none text-gray-800 focus:shadow-none
-            {isFirstPageActive ? 'pointer-events-none' : 'hover:text-gray-800 hover:bg-gray-200'}"
-            aria-label="Previous"
-          >
-            <span aria-hidden="true">&laquo;</span>
-          </button>
-        </li>
-        {#each pages as page (page)}
-          <li class="page-item {page.active ? 'active' : ''}">
+              >
+            </li>
+          </ul>
+        </div>
+        <span class="px-2 py-3">rows per page.</span>
+      {/if}
+    </div>
+    <nav aria-label="Page navigation example">
+      {#if !showAll}
+        <ul class="flex  list-style-none">
+          <li class="page-item {isFirstPageActive ? 'disabled' : ''}">
             <button
-              on:click={(_) => selectPage(page.number)}
-              class="page-link relative block py-1.5 px-3 border-0 outline-none rounded
-                {page.active
-                ? 'bg-blue-600 text-white hover:text-white hover:bg-blue-600 shadow-md focus:shadow-md'
-                : 'bg-transparent text-gray-800 hover:text-gray-800 hover:bg-gray-200 focus:shadow-none'}
-                  "
+              on:click={(_) => selectPage(1)}
+              class="page-link relative block py-1.5 px-3 rounded border-0 bg-transparent outline-none text-gray-800 focus:shadow-none
+            {isFirstPageActive ? 'pointer-events-none' : 'hover:text-gray-800 hover:bg-gray-200'}"
+              aria-label="Previous"
             >
-              {page.number}
+              <span aria-hidden="true">&laquo;</span>
             </button>
           </li>
-        {/each}
-        <li class="page-item  {isLastPageActive ? 'disabled' : ''}">
-          <button
-            on:click={(_) => selectPage(pages.length)}
-            class="page-link relative block py-1.5 px-3 rounded border-0 bg-transparent outline-none text-gray-800 focus:shadow-none
+          {#each pages as page (page)}
+            <li class="page-item {page.active ? 'active' : ''}">
+              <button
+                on:click={(_) => selectPage(page.number)}
+                class="page-link relative block py-1.5 px-3 border-0 outline-none rounded
+                {page.active
+                  ? 'bg-blue-600 text-white hover:text-white hover:bg-blue-600 shadow-md focus:shadow-md'
+                  : 'bg-transparent text-gray-800 hover:text-gray-800 hover:bg-gray-200 focus:shadow-none'}
+                  "
+              >
+                {page.number}
+              </button>
+            </li>
+          {/each}
+          <li class="page-item  {isLastPageActive ? 'disabled' : ''}">
+            <button
+              on:click={(_) => selectPage(pages.length)}
+              class="page-link relative block py-1.5 px-3 rounded border-0 bg-transparent outline-none text-gray-800 focus:shadow-none
             {isLastPageActive ? 'pointer-events-none' : 'hover:text-gray-800 hover:bg-gray-200'}"
-            aria-label="Next"
-          >
-            <span aria-hidden="true">&raquo;</span>
-          </button>
-        </li>
-      </ul>
-    {/if}
-  </nav>
-</div>
+              aria-label="Next"
+            >
+              <span aria-hidden="true">&raquo;</span>
+            </button>
+          </li>
+        </ul>
+      {/if}
+    </nav>
+  </div>
+{/if}
