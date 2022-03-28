@@ -8,6 +8,13 @@ const config = {
   preprocess: preprocess({ postcss: true }),
 
   kit: {
+    vite: {
+      resolve: {
+        alias: {
+          path: 'path-browserify',
+        },
+      },
+    },
     adapter: adapter({
       pages: 'build',
       assets: 'build',
