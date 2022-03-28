@@ -24,7 +24,8 @@ def main():
             print("Writing {} to file".format(data))
             f.write(data)
             f.write("\n")
-            time.sleep(delay)
+        print("Sleeping for {} seconds".format(delay))
+        time.sleep(delay)
 
 
 if __name__ == "__main__":
