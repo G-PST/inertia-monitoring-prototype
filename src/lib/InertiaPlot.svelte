@@ -12,7 +12,13 @@
   $: console.log($data)
   $: timeScale = d3
     .scaleTime()
-    .domain(d3.extent($data.commitment_data, (d) => new Date(d.timestamp)))
+    .domain(
+      d3.extent($data.commitment_data, (d) => {
+        let t = new Date(d.timestamp)
+        t.setTime(t.getTime() + t.getTimezoneOffset() * 60 * 1000)
+        return t
+      }),
+    )
     .range([0, $width])
   $: inertiaScale = d3
     .scaleLinear()
@@ -29,7 +35,7 @@
 
   let xaxis = null
   let yaxis = null
-  $: d3.select(xaxis).call(d3.axisBottom(timeScale).ticks(10).tickFormat(d3.timeFormat('%H:%M:%S')))
+  $: d3.select(xaxis).call(d3.axisBottom(timeScale).tickFormat(d3.timeFormat('%H:%M:%S')))
   $: d3.select(yaxis).call(d3.axisLeft(inertiaScale))
 
   function getLinePlot(data, width) {
@@ -39,7 +45,9 @@
       for (const gen of data.generator_data) {
         h += row[gen.name] * gen.h * gen.mva
       }
-      lineplot.push({ timestamp: timeScale(new Date(row.timestamp)), value: inertiaScale(h) })
+      let d = new Date(row.timestamp)
+      d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000)
+      lineplot.push({ timestamp: timeScale(d), value: inertiaScale(h) })
     }
     return lineplot
   }
