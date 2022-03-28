@@ -3,25 +3,83 @@
   Generates an SVG area shape using the `area` function from [d3-shape](https://github.com/d3/d3-shape).
  -->
 <script lang="ts">
-  import { Svg } from 'layercake'
+  import * as d3 from 'd3'
+  import { LayerCake, ScaledSvg, Svg, Html } from 'layercake'
   import { getContext } from 'svelte'
   const { data, width, height } = getContext('LayerCake')
   export let stroke = '#ab00d6'
 
-  function linePlot(generator) {
-    return (
-      'M' +
-      [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-        .map((d) => $width * d + ',' + $height * d)
-        .join('L')
-    )
+  $: console.log($data)
+  $: timeScale = d3
+    .scaleTime()
+    .domain(d3.extent($data.commitment_data, (d) => new Date(d.timestamp)))
+    .range([0, $width])
+  $: inertiaScale = d3
+    .scaleLinear()
+    .domain(d3.extent($data.commitment_data, (d) => inertiaRow(d)))
+    .range([$height, 0])
+
+  function inertiaRow(d) {
+    let h = 0
+    for (const gen of $data.generator_data) {
+      h += d[gen.name] * gen.h * gen.mva
+    }
+    return h
   }
-  console.log($data)
+
+  let xaxis = null
+  let yaxis = null
+  $: d3.select(xaxis).call(d3.axisBottom(timeScale).ticks(10).tickFormat(d3.timeFormat('%H:%M:%S')))
+  $: d3.select(yaxis).call(d3.axisLeft(inertiaScale))
+
+  function getLinePlot(data, width) {
+    const lineplot = []
+    for (const row of data.commitment_data) {
+      let h = 0
+      for (const gen of data.generator_data) {
+        h += row[gen.name] * gen.h * gen.mva
+      }
+      lineplot.push({ timestamp: timeScale(new Date(row.timestamp)), value: inertiaScale(h) })
+    }
+    return lineplot
+  }
+  $: path =
+    'M' +
+    getLinePlot($data, $width)
+      .map((d) => {
+        return d.timestamp + ',' + d.value
+      })
+      .join('L')
 </script>
 
 <Svg>
-  <text>hello</text>
-  {#each $data as line}
-    <path class="path-line" d={linePlot(line)} {stroke} />
-  {/each}
+  <g transform="translate(100 100)">
+    <g class="xaxis" bind:this={xaxis} transform="translate(0  {$height})">
+      <text
+        opacity="1"
+        fill="currentColor"
+        y="9"
+        dy="0.71em"
+        font-size="12px"
+        text-anchor="middle"
+        transform="translate({$width / 2} 25)"
+      >
+        Time (HH:MM:SS)
+      </text>
+    </g>
+    <g class="yaxis" bind:this={yaxis}>
+      <text
+        opacity="1"
+        fill="currentColor"
+        y="9"
+        dy="0.71em"
+        font-size="12px"
+        text-anchor="middle"
+        transform="rotate(270) translate({-$height / 2} {-$width / 25})"
+      >
+        Inertia (MWs)
+      </text>
+    </g>
+    <path class="path-line" fill="none" d={path} {stroke} />
+  </g>
 </Svg>

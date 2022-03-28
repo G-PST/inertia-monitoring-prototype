@@ -8,7 +8,9 @@ use tauri_plugin_fs_watch::Watcher;
 #[derive(Serialize, Deserialize, Debug)]
 struct Generator {
   name: String,
+  kind: String,
   bus: i64,
+  mva: f64,
   pmin: f64,
   pmax: f64,
   basemva: f64,

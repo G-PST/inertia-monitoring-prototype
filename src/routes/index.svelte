@@ -14,14 +14,16 @@
   import { watch, watchImmediate } from 'tauri-plugin-fs-watch-api'
 
   import Fa from 'svelte-fa'
-  import { LayerCake, Svg } from 'layercake'
   import InertiaPlot from '$lib/InertiaPlot.svelte'
   import { faExclamationTriangle, faSync } from '@fortawesome/free-solid-svg-icons'
   import Table from '$lib/Table.svelte'
+  import { LayerCake } from 'layercake'
 
   interface Generator {
     name: string
     bus: number
+    kind: String
+    mva: number
     pmin: number
     pmax: number
     basemva: number
@@ -33,6 +35,8 @@
   let generator_columns = [
     { title: 'Name', field: 'name' },
     { title: 'Bus', field: 'bus' },
+    { title: 'Type', field: 'kind' },
+    { title: 'MVA', field: 'mva' },
     { title: 'Pmin', field: 'pmin' },
     { title: 'Pmax', field: 'pmax' },
     { title: 'Basemva', field: 'basemva' },
@@ -55,6 +59,12 @@
     return d
   }
   $: commitment_columns = getCommitmentColumns(generator_data)
+
+  function getData(generator_data, generator_columns, commitment_columns, commitment_data) {
+    return { generator_data, generator_columns, commitment_columns, commitment_data }
+  }
+  $: data = getData(generator_data, generator_columns, commitment_columns, commitment_data)
+
   let stopWatchingSystemData = null
   let stopWatchingCommitmentData = null
 
@@ -180,22 +190,13 @@
   </FileDrop>
 </div>
 
-<div class="grid mx-20 my-4">
-  {#if generator_data.length == 0}
-    <div class="grid-flow-row w-full items-stretch">
-      <div
-        class="bg-yellow-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full"
-        role="alert"
-      >
-        <Fa class="w-4 h-4 mr-2 fill-current" icon={faExclamationTriangle} />
-        No data loaded.
-      </div>
-    </div>
-  {:else}
-    <Table data={generator_data} columns={generator_columns} />
-    <Table data={commitment_data} columns={commitment_columns} id={false} />
-  {/if}
-</div>
+{#if commitment_data.length > 0}
+  <div class="mx-20 py-5 my-5 w-5/6 h-4/6">
+    <LayerCake {data}>
+      <InertiaPlot />
+    </LayerCake>
+  </div>
+{/if}
 
 <style>
   .droppable {
