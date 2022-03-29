@@ -51,9 +51,26 @@
     }
     return lineplot
   }
+
+  function getInertiaFloorLinePlot(data, width) {
+    const lineplot = []
+    for (const row of data.commitment_data) {
+      let d = new Date(row.timestamp)
+      d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000)
+      lineplot.push({ timestamp: timeScale(d), value: inertiaScale(data.inertia_floor) })
+    }
+    return lineplot
+  }
   $: path =
     'M' +
     getLinePlot($data, $width)
+      .map((d) => {
+        return d.timestamp + ',' + d.value
+      })
+      .join('L')
+  $: inertiaFloorPath =
+    'M' +
+    getInertiaFloorLinePlot($data, $width)
       .map((d) => {
         return d.timestamp + ',' + d.value
       })
@@ -89,5 +106,6 @@
       </text>
     </g>
     <path class="path-line" fill="none" d={path} {stroke} />
+    <path class="path-line" fill="none" d={inertiaFloorPath} {stroke} />
   </g>
 </Svg>

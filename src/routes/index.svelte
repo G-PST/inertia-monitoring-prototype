@@ -31,6 +31,8 @@
     deadband: number
     h: number
   }
+
+  let inertia_floor = 500
   let generator_data: Generator[] = []
   let generator_columns = [
     { title: 'Name', field: 'name' },
@@ -60,10 +62,22 @@
   }
   $: commitment_columns = getCommitmentColumns(generator_data)
 
-  function getData(generator_data, generator_columns, commitment_columns, commitment_data) {
-    return { generator_data, generator_columns, commitment_columns, commitment_data }
+  function getData(
+    generator_data,
+    generator_columns,
+    commitment_columns,
+    commitment_data,
+    inertia_floor,
+  ) {
+    return { generator_data, generator_columns, commitment_columns, commitment_data, inertia_floor }
   }
-  $: data = getData(generator_data, generator_columns, commitment_columns, commitment_data)
+  $: data = getData(
+    generator_data,
+    generator_columns,
+    commitment_columns,
+    commitment_data,
+    inertia_floor,
+  )
 
   let stopWatchingSystemData = null
   let stopWatchingCommitmentData = null
@@ -190,6 +204,37 @@
   </FileDrop>
 </div>
 
+<div class="flex justify-center">
+  <div class="mb-3 xl:w-96">
+    <label for="exampleNumber0" class="form-label inline-block mb-2 text-gray-700"
+      >Inertia Floor (MWs)</label
+    >
+    <input
+      type="number"
+      bind:value={inertia_floor}
+      class="
+        form-control
+        block
+        w-full
+        px-3
+        py-1.5
+        text-base
+        font-normal
+        text-gray-700
+        bg-white bg-clip-padding
+        border border-solid border-gray-300
+        rounded
+        transition
+        ease-in-out
+        m-0
+        focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
+      "
+      id="exampleNumber0"
+      placeholder="Inertia Floor (MWs)"
+    />
+  </div>
+</div>
+
 {#if commitment_data.length > 0}
   <div class="mx-20 py-5 my-5 w-5/6 h-4/6">
     <LayerCake {data}>
@@ -198,6 +243,23 @@
   </div>
 {/if}
 
+<!-- <div class="grid mx-20 my-4"> -->
+<!--   {#if generator_data.length == 0} -->
+<!--     <div class="grid-flow-row w-full items-stretch"> -->
+<!--       <div -->
+<!--         class="bg-yellow-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-full" -->
+<!--         role="alert" -->
+<!--       > -->
+<!--         <Fa class="w-4 h-4 mr-2 fill-current" icon={faExclamationTriangle} /> -->
+<!--         No data loaded. -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   {:else} -->
+<!--     <Table data={generator_data} columns={generator_columns} /> -->
+<!--     <Table data={commitment_data} columns={commitment_columns} id={false} /> -->
+<!--   {/if} -->
+
+<!-- </div> -->
 <style>
   .droppable {
     background: #d6dff0;
