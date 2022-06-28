@@ -68,7 +68,6 @@ fn get_system_data(data: String) -> Result<Vec<Generator>, String> {
 
 fn main() {
   tauri::Builder::default()
-    .plugin(tauri_plugin_window_state::WindowState::default())
     .plugin(Watcher::default())
     .invoke_handler(tauri::generate_handler![get_system_data, get_commitment_data])
     .run(tauri::generate_context!())
