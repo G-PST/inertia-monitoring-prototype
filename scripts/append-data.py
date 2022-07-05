@@ -19,7 +19,10 @@ def main():
     for _ in range(0, timesteps):
         with open("examples/commitment-data.csv", "a") as f:
             date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-            generators = ",".join([str(random.randint(0, 1)) for _ in range(0, ngen)])
+            generators = [str(random.randint(0, 1)) for _ in range(0, ngen)]
+            generators[-1] = "1"
+            generators[-2] = "1"
+            generators = ",".join(generators)
             data = "{},{}".format(date, generators)
             print("Writing {} to file".format(data))
             f.write(data)
