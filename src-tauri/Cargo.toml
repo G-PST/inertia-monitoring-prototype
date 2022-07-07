@@ -1,6 +1,6 @@
 [package]
 name = "inertia-monitoring-dashboard"
-version = "0.1.0"
+version = "0.1.1"
 description = "Inertia Monitoring Dashboard"
 authors = ["me@kdheepak.com"]
 license = ""
