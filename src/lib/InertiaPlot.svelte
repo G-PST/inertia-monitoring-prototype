@@ -10,11 +10,12 @@
   export let stroke = "#ab00d6";
   export let inertiaFloorStroke = "#ff0000";
 
+  const SLICE = -24;
   $: console.log($data);
   $: timeScale = d3
     .scaleTime()
     .domain(
-      d3.extent($data.commitment_data.slice(-10), (d) => {
+      d3.extent($data.commitment_data.slice(SLICE), (d) => {
         let t = new Date(d.timestamp);
         t.setTime(t.getTime() + t.getTimezoneOffset() * 60 * 1000);
         return t;
@@ -41,7 +42,7 @@
 
   function getLinePlot(data, width) {
     const lineplot = [];
-    for (const row of data.commitment_data.slice(-10)) {
+    for (const row of data.commitment_data.slice(SLICE)) {
       let h = 0;
       for (const gen of data.generator_data) {
         h += row[gen.name] * gen.h * gen.mva;
@@ -55,7 +56,7 @@
 
   function getInertiaFloorLinePlot(data, width) {
     const lineplot = [];
-    for (const row of data.commitment_data.slice(-10)) {
+    for (const row of data.commitment_data.slice(SLICE)) {
       let d = new Date(row.timestamp);
       d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
       lineplot.push({ timestamp: timeScale(d), value: inertiaScale(data.inertia_floor) });
