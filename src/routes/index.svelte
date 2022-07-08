@@ -1,53 +1,54 @@
 <script lang="ts">
-  import { SvelteToast } from '@zerodevx/svelte-toast'
-  import { toast } from '@zerodevx/svelte-toast'
+  import { SvelteToast } from "@zerodevx/svelte-toast";
+  import { toast } from "@zerodevx/svelte-toast";
 
-  import FileDrop from 'svelte-tauri-filedrop'
-  import { onMount } from 'svelte'
-  import { browser } from '$app/env'
+  import FileDrop from "svelte-tauri-filedrop";
+  import { onMount } from "svelte";
+  import { browser } from "$app/env";
 
-  import { invoke } from '@tauri-apps/api/tauri'
-  import { open, save } from '@tauri-apps/api/dialog'
-  import { join } from '@tauri-apps/api/path'
-  import path from 'path'
+  import { invoke } from "@tauri-apps/api/tauri";
+  import { open, save } from "@tauri-apps/api/dialog";
+  import { join } from "@tauri-apps/api/path";
+  import path from "path";
 
-  import { watch, watchImmediate } from 'tauri-plugin-fs-watch-api'
+  import { watch, watchImmediate } from "tauri-plugin-fs-watch-api";
 
-  import Fa from 'svelte-fa'
-  import InertiaPlot from '$lib/InertiaPlot.svelte'
-  import { faExclamationTriangle, faSync } from '@fortawesome/free-solid-svg-icons'
-  import Table from '$lib/Table.svelte'
-  import { LayerCake } from 'layercake'
+  import Fa from "svelte-fa";
+  import InertiaPlot from "$lib/InertiaPlot.svelte";
+  import { faExclamationTriangle, faSync } from "@fortawesome/free-solid-svg-icons";
+  import Table from "$lib/Table.svelte";
+  import { LayerCake } from "layercake";
 
   interface Generator {
-    name: string
-    bus: number
-    kind: String
-    mva: number
-    pmin: number
-    pmax: number
-    basemva: number
-    droop: number
-    deadband: number
-    h: number
+    name: string;
+    bus: number;
+    kind: String;
+    mva: number;
+    pmin: number;
+    pmax: number;
+    basemva: number;
+    droop: number;
+    deadband: number;
+    h: number;
   }
 
-  let inertia_floor = 500
-  let generator_data: Generator[] = []
+  let inertia_floor = 10000;
+  let last_slice = 24;
+  let generator_data: Generator[] = [];
   let generator_columns = [
-    { title: 'Name', field: 'name' },
-    { title: 'Bus', field: 'bus' },
-    { title: 'Type', field: 'kind' },
-    { title: 'MVA', field: 'mva' },
-    { title: 'Pmin', field: 'pmin' },
-    { title: 'Pmax', field: 'pmax' },
-    { title: 'Basemva', field: 'basemva' },
-    { title: 'Droop', field: 'droop' },
-    { title: 'Deadband', field: 'deadband' },
-    { title: 'H', field: 'h' },
-  ]
+    { title: "Name", field: "name" },
+    { title: "Bus", field: "bus" },
+    { title: "Type", field: "kind" },
+    { title: "MVA", field: "mva" },
+    { title: "Pmin", field: "pmin" },
+    { title: "Pmax", field: "pmax" },
+    { title: "Basemva", field: "basemva" },
+    { title: "Droop", field: "droop" },
+    { title: "Deadband", field: "deadband" },
+    { title: "H", field: "h" },
+  ];
 
-  let commitment_data: [] = []
+  let commitment_data: [] = [];
   function getCommitmentColumns(data: Generator[]) {
     let d = data
       .map((d) => d.name)
@@ -55,12 +56,12 @@
         return {
           title: n,
           field: n,
-        }
-      })
-    d.unshift({ title: 'Timestamp', field: 'timestamp' })
-    return d
+        };
+      });
+    d.unshift({ title: "Timestamp", field: "timestamp" });
+    return d;
   }
-  $: commitment_columns = getCommitmentColumns(generator_data)
+  $: commitment_columns = getCommitmentColumns(generator_data);
 
   function getData(
     generator_data,
@@ -69,7 +70,14 @@
     commitment_data,
     inertia_floor,
   ) {
-    return { generator_data, generator_columns, commitment_columns, commitment_data, inertia_floor }
+    return {
+      generator_data,
+      generator_columns,
+      commitment_columns,
+      commitment_data,
+      inertia_floor,
+      last_slice,
+    };
   }
   $: data = getData(
     generator_data,
@@ -77,90 +85,92 @@
     commitment_columns,
     commitment_data,
     inertia_floor,
-  )
+    last_slice,
+  );
 
-  let stopWatchingSystemData = null
-  let stopWatchingCommitmentData = null
+  let stopWatchingSystemData = null;
+  let stopWatchingCommitmentData = null;
 
   async function _unwatch() {
-    console.log({ stopWatchingSystemData, stopWatchingCommitmentData })
+    console.log({ stopWatchingSystemData, stopWatchingCommitmentData });
     if (stopWatchingSystemData) {
-      await stopWatchingSystemData().catch((error) => toastError(error))
-      stopWatchingSystemData = null
+      await stopWatchingSystemData().catch((error) => toastError(error));
+      stopWatchingSystemData = null;
     }
     if (stopWatchingCommitmentData) {
-      await stopWatchingCommitmentData().catch((error) => toastError(error))
-      stopWatchingCommitmentData = null
+      await stopWatchingCommitmentData().catch((error) => toastError(error));
+      stopWatchingCommitmentData = null;
     }
   }
 
   async function handleClear(e) {
-    stopWatchingSystemData = null
-    stopWatchingCommitmentData = null
-    commitment_data = []
-    generator_data = []
+    stopWatchingSystemData = null;
+    stopWatchingCommitmentData = null;
+    commitment_data = [];
+    generator_data = [];
   }
 
   async function handleLoadData(e) {
     const folder = await open({
       directory: true,
       multiple: false,
-      title: 'Folder with system and commitment data',
-    })
-    const systemfilepath = await join(<string>folder, 'system-data.csv')
-    const commitmentfilepath = await join(<string>folder, 'commitment-data.csv')
-    const paths = [systemfilepath, commitmentfilepath]
+      title: "Folder with system and commitment data",
+    });
+    const systemfilepath = await join(<string>folder, "system-data.csv");
+    const commitmentfilepath = await join(<string>folder, "commitment-data.csv");
+    const paths = [systemfilepath, commitmentfilepath];
     await handleFiles(paths).catch((err) =>
       toastError(`Unable to load system-data.csv and commitment-data.csv: ${err}.`),
-    )
+    );
   }
 
   function toastError(m) {
     toast.push(m, {
       theme: {
-        '--toastBackground': '#F56565',
-        '--toastBarBackground': '#C53030',
+        "--toastBackground": "#F56565",
+        "--toastBarBackground": "#C53030",
       },
-    })
+    });
   }
   async function handleFiles(paths) {
     if (paths.length != 2) {
-      toastError('Two files required')
-      return
+      toastError("Two files required");
+      return;
     }
-    if (paths.filter((p) => p.endsWith('system-data.csv')).length != 1) {
-      toastError('system-data.csv required')
-      return
+    if (paths.filter((p) => p.endsWith("system-data.csv")).length != 1) {
+      toastError("system-data.csv required");
+      return;
     }
-    if (paths.filter((p) => p.endsWith('commitment-data.csv')).length != 1) {
-      toastError('commitment-data.csv')
-      return
+    if (paths.filter((p) => p.endsWith("commitment-data.csv")).length != 1) {
+      toastError("commitment-data.csv");
+      return;
     }
 
-    const systemfilepath = paths.filter((p) => p.endsWith('system-data.csv'))[0]
-    generator_data = await invoke('get_system_data', { data: systemfilepath })
+    const systemfilepath = paths.filter((p) => p.endsWith("system-data.csv"))[0];
+    generator_data = await invoke("get_system_data", { data: systemfilepath });
     if (stopWatchingSystemData === null) {
       stopWatchingSystemData = await watch(systemfilepath, { recursive: true }, (e) => {
-        invoke('get_system_data', { data: e.payload })
+        invoke("get_system_data", { data: e.payload })
           .then(async (m: Generator[]) => {
-            generator_data = m
+            console.log(m);
+            generator_data = m;
           })
-          .catch((error) => console.error(error))
-      })
+          .catch((error) => console.error(error));
+      });
     }
 
-    const commitmentfilepath = paths.filter((p) => p.endsWith('commitment-data.csv'))[0]
-    commitment_data = await invoke('get_commitment_data', {
+    const commitmentfilepath = paths.filter((p) => p.endsWith("commitment-data.csv"))[0];
+    commitment_data = await invoke("get_commitment_data", {
       data: commitmentfilepath,
-    })
+    });
     if (stopWatchingCommitmentData === null) {
       stopWatchingCommitmentData = await watch(commitmentfilepath, { recursive: true }, (e) => {
-        invoke('get_commitment_data', { data: e.payload })
+        invoke("get_commitment_data", { data: e.payload })
           .then(async (m: []) => {
-            commitment_data = m
+            commitment_data = m;
           })
-          .catch((error) => console.error(error))
-      })
+          .catch((error) => console.error(error));
+      });
     }
   }
 </script>
@@ -192,7 +202,7 @@
 </div>
 
 <div class="mx-20 my-5">
-  <FileDrop extensions={['csv']} {handleFiles} let:files>
+  <FileDrop extensions={["csv"]} {handleFiles} let:files>
     <div
       class="focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none text-gray-700
           bg-gray-100 bg-clip-padding
@@ -205,7 +215,7 @@
 </div>
 
 <div class="flex justify-center">
-  <div class="mb-3 xl:w-96">
+  <div class="mb-3 xl:w-96 mx-4">
     <label for="exampleNumber0" class="form-label inline-block mb-2 text-gray-700"
       >Inertia Floor (MWs)</label
     >
@@ -231,6 +241,34 @@
       "
       id="exampleNumber0"
       placeholder="Inertia Floor (MWs)"
+    />
+  </div>
+  <div class="mb-3 xl:w-96 mx-4">
+    <label for="exampleNumber1" class="form-label inline-block mb-2 text-gray-700"
+      >Show Time Periods (N)</label
+    >
+    <input
+      type="number"
+      bind:value={last_slice}
+      class="
+        form-control
+        block
+        w-full
+        px-3
+        py-1.5
+        text-base
+        font-normal
+        text-gray-700
+        bg-white bg-clip-padding
+        border border-solid border-gray-300
+        rounded
+        transition
+        ease-in-out
+        m-0
+        focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
+      "
+      id="exampleNumber1"
+      placeholder="24"
     />
   </div>
 </div>

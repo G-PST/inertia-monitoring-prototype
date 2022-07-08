@@ -10,12 +10,12 @@
   export let stroke = "#ab00d6";
   export let inertiaFloorStroke = "#ff0000";
 
-  const SLICE = -24;
-  $: console.log($data);
+  $: last_slice = $data.last_slice;
+
   $: timeScale = d3
     .scaleTime()
     .domain(
-      d3.extent($data.commitment_data.slice(SLICE), (d) => {
+      d3.extent($data.commitment_data.slice(-1 * last_slice), (d) => {
         let t = new Date(d.timestamp);
         t.setTime(t.getTime() + t.getTimezoneOffset() * 60 * 1000);
         return t;
@@ -24,13 +24,13 @@
     .range([0, $width]);
   $: inertiaScale = d3
     .scaleLinear()
-    .domain([0, d3.extent($data.commitment_data, (d) => inertiaRow(d))[1]])
+    .domain([0, d3.extent($data.commitment_data, (d) => inertiaRow(d))[1] * 1.2])
     .range([$height, 0]);
 
-  function inertiaRow(d) {
+  function inertiaRow(row) {
     let h = 0;
     for (const gen of $data.generator_data) {
-      h += d[gen.name] * gen.h * gen.mva;
+      h += parseInt(row[gen.name] ? row[gen.name] : "0") * gen.h * gen.mva;
     }
     return h;
   }
@@ -42,10 +42,10 @@
 
   function getLinePlot(data, width) {
     const lineplot = [];
-    for (const row of data.commitment_data.slice(SLICE)) {
+    for (const row of data.commitment_data.slice(-1 * last_slice)) {
       let h = 0;
       for (const gen of data.generator_data) {
-        h += row[gen.name] * gen.h * gen.mva;
+        h += parseInt(row[gen.name] ? row[gen.name] : "0") * gen.h * gen.mva;
       }
       let d = new Date(row.timestamp);
       d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
@@ -56,7 +56,7 @@
 
   function getInertiaFloorLinePlot(data, width) {
     const lineplot = [];
-    for (const row of data.commitment_data.slice(SLICE)) {
+    for (const row of data.commitment_data.slice(-1 * last_slice)) {
       let d = new Date(row.timestamp);
       d.setTime(d.getTime() + d.getTimezoneOffset() * 60 * 1000);
       lineplot.push({ timestamp: timeScale(d), value: inertiaScale(data.inertia_floor) });
